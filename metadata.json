@@ -1,0 +1,9 @@
+{
+  "name": "AURA AI",
+  "description": "An immersive AI-driven storytelling and RPG platform where you create characters, explore infinite worlds, and embark on epic adventures powered by Gemini.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}

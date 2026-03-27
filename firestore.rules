@@ -1,0 +1,196 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - uid: string (required)
+    //   - email: string (required, email format)
+    //   - displayName: string (optional)
+    //   - photoURL: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: personajes
+    // Document ID: {personajeId}
+    // Fields:
+    //   - id: string (required)
+    //   - userId: string (required, matches owner)
+    //   - name: string (required, size < 100)
+    //   - race: string (optional)
+    //   - class: string (optional)
+    //   - bio: string (optional, size < 2000)
+    //   - imageUrl: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: cronicas
+    // Document ID: {cronicaId}
+    // Fields:
+    //   - id: string (required)
+    //   - userId: string (required, matches owner)
+    //   - characterId: string (required)
+    //   - title: string (required, size < 200)
+    //   - genre: string (required)
+    //   - summary: string (optional, size < 5000)
+    //   - status: string (required, enum: ['active', 'completed'])
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: cronicas/{cronicaId}/messages
+    // Document ID: {messageId}
+    // Fields:
+    //   - id: string (required)
+    //   - cronicaId: string (required)
+    //   - role: string (required, enum: ['user', 'model', 'system'])
+    //   - content: string (required, size < 10000)
+    //   - type: string (required, enum: ['text', 'image', 'video'])
+    //   - imageUrl: string (optional)
+    //   - videoUrl: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        ((request.auth.token.get('email', '') == "bryantobando2425@gmail.com" && request.auth.token.get('email_verified', false) == true) ||
+         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user') == 'admin'));
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'email', 'createdAt']) &&
+        data.uid == request.auth.uid &&
+        isValidEmail(data.email) &&
+        data.email.size() < 256 &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100)) &&
+        (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() < 1000000)) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidPersonaje(data) {
+      return hasRequiredFields(['userId', 'name', 'createdAt']) &&
+        data.userId == request.auth.uid &&
+        data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+        (!('race' in data) || (data.race is string && data.race.size() < 50)) &&
+        (!('class' in data) || (data.class is string && data.class.size() < 50)) &&
+        (!('bio' in data) || (data.bio is string && data.bio.size() < 2000)) &&
+        (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() < 1000000)) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidCronica(data) {
+      return hasRequiredFields(['userId', 'characterId', 'title', 'genre', 'status', 'createdAt']) &&
+        data.userId == request.auth.uid &&
+        data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+        data.genre is string && data.genre.size() < 50 &&
+        (!('summary' in data) || (data.summary is string && data.summary.size() < 5000)) &&
+        data.status in ['active', 'completed'] &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidMessage(data) {
+      return hasRequiredFields(['cronicaId', 'role', 'content', 'type', 'createdAt']) &&
+        data.role in ['user', 'model', 'system'] &&
+        data.type in ['text', 'image', 'video'] &&
+        data.content is string && data.content.size() < 10000 &&
+        (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() < 1000000)) &&
+        (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() < 1000000)) &&
+        data.createdAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid) && isValidUser(request.resource.data);
+      allow update: if isOwner(uid) && isValidUser(request.resource.data) && 
+                      (request.resource.data.get('role', 'user') == resource.data.get('role', 'user') || isAdmin());
+    }
+
+    match /personajes/{personajeId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidPersonaje(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && isValidPersonaje(request.resource.data);
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /cronicas/{cronicaId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidCronica(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && isValidCronica(request.resource.data);
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && 
+          (exists(/databases/$(database)/documents/cronicas/$(cronicaId)) && 
+           get(/databases/$(database)/documents/cronicas/$(cronicaId)).data.userId == request.auth.uid || isAdmin());
+        allow create: if isAuthenticated() && 
+          (exists(/databases/$(database)/documents/cronicas/$(cronicaId)) && 
+           get(/databases/$(database)/documents/cronicas/$(cronicaId)).data.userId == request.auth.uid) && 
+          isValidMessage(request.resource.data);
+      }
+    }
+
+    match /mundos/{mundoId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /bestiario/{bestiarioId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /facciones/{faccionId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /objetos/{objetoId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

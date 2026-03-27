@@ -1,0 +1,127 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique identifier for the user." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "photoURL": { "type": "string", "description": "The user's profile photo URL." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user profile was created." }
+      },
+      "required": ["uid", "email", "createdAt"]
+    },
+    "Character": {
+      "title": "Character",
+      "description": "An RPG character created by a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who owns this character." },
+        "name": { "type": "string", "description": "Character name." },
+        "race": { "type": "string", "description": "Character race (e.g., Elf, Human, Orc)." },
+        "class": { "type": "string", "description": "Character class (e.g., Mage, Warrior, Rogue)." },
+        "bio": { "type": "string", "description": "Character background story." },
+        "imageUrl": { "type": "string", "description": "AI-generated image of the character." },
+        "worldId": { "type": "string", "description": "Optional world ID. If null, it's free." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["userId", "name", "createdAt"]
+    },
+    "Cronica": {
+      "title": "Cronica",
+      "description": "A storytelling session or campaign.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who started this cronica." },
+        "characterId": { "type": "string", "description": "The ID of the character used in this cronica." },
+        "title": { "type": "string", "description": "Cronica title." },
+        "genre": { "type": "string", "description": "Genre (e.g., Fantasy, Sci-Fi, Horror)." },
+        "summary": { "type": "string", "description": "Current summary of the story." },
+        "status": { "type": "string", "enum": ["active", "completed"], "description": "Current status." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["userId", "characterId", "title", "genre", "createdAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A single message in a cronica chat.",
+      "type": "object",
+      "properties": {
+        "cronicaId": { "type": "string", "description": "The ID of the cronica this message belongs to." },
+        "role": { "type": "string", "enum": ["user", "model", "system"], "description": "Who sent the message." },
+        "content": { "type": "string", "description": "The text content of the message." },
+        "type": { "type": "string", "enum": ["text", "image", "video"], "description": "The type of content." },
+        "imageUrl": { "type": "string", "description": "Optional image URL." },
+        "videoUrl": { "type": "string", "description": "Optional video URL." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp." }
+      },
+      "required": ["cronicaId", "role", "content", "createdAt"]
+    },
+    "Bestiary": {
+      "title": "Bestiary",
+      "description": "A creature in the multiverse.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who owns this creature." },
+        "name": { "type": "string", "description": "Creature name." },
+        "description": { "type": "string", "description": "Creature description." },
+        "dangerLevel": { "type": "string", "description": "Danger level." },
+        "worldId": { "type": "string", "description": "Optional world ID." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["userId", "name", "createdAt"]
+    },
+    "Faction": {
+      "title": "Faction",
+      "description": "A faction in the multiverse.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who owns this faction." },
+        "name": { "type": "string", "description": "Faction name." },
+        "description": { "type": "string", "description": "Faction description." },
+        "influence": { "type": "string", "description": "Influence level." },
+        "worldId": { "type": "string", "description": "Optional world ID." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["userId", "name", "createdAt"]
+    },
+    "Item": {
+      "title": "Item",
+      "description": "An object in the multiverse.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who owns this item." },
+        "name": { "type": "string", "description": "Item name." },
+        "description": { "type": "string", "description": "Item description." },
+        "type": { "type": "string", "description": "Item type." },
+        "worldId": { "type": "string", "description": "Optional world ID." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["userId", "name", "createdAt"]
+    },
+    "World": {
+      "title": "World",
+      "description": "A world in the multiverse.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The ID of the user who owns this world." },
+        "name": { "type": "string", "description": "World name." },
+        "description": { "type": "string", "description": "World description." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." }
+      },
+      "required": ["userId", "name", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": { "schema": "User", "description": "User profiles." },
+    "/personajes/{personajeId}": { "schema": "Character", "description": "User characters." },
+    "/cronicas/{cronicaId}": { "schema": "Cronica", "description": "Story sessions." },
+    "/cronicas/{cronicaId}/messages/{messageId}": { "schema": "Message", "description": "Chat history for a cronica." },
+    "/mundos/{mundoId}": { "schema": "World", "description": "User worlds." },
+    "/bestiario/{bestiarioId}": { "schema": "Bestiary", "description": "User creatures." },
+    "/facciones/{faccionId}": { "schema": "Faction", "description": "User factions." },
+    "/objetos/{objetoId}": { "schema": "Item", "description": "User items." }
+  }
+}
