@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser, browserPopupRedirectResolver } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, getDocFromServer, FirestoreError, getCountFromServer, getDocs, limit, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc, collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, getDocFromServer, FirestoreError, getCountFromServer, getDocs, limit, updateDoc, deleteDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 
 // Import the Firebase configuration
@@ -76,5 +76,5 @@ async function testConnection() {
 }
 testConnection();
 
-export { signInWithPopup, signOut, onAuthStateChanged, collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc, getDoc, setDoc, getCountFromServer, getDocs, limit, browserPopupRedirectResolver, updateDoc };
+export { signInWithPopup, signOut, onAuthStateChanged, collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc, getDoc, setDoc, getCountFromServer, getDocs, limit, browserPopupRedirectResolver, updateDoc, ref, uploadString, getDownloadURL, deleteDoc };
 export type { FirebaseUser };

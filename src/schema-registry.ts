@@ -54,25 +54,51 @@ export interface Cronica extends BaseEntity {
   status: 'active' | 'completed';
 }
 
+export interface TreeNode {
+  id: string;
+  name: string;
+  type: 'region' | 'ciudad' | 'localizacion' | 'sub-localizacion' | 'edificio' | 'habitacion';
+  children: TreeNode[];
+  content?: string; // Markdown content for this node
+}
+
 export interface Mundo extends BaseEntity {
   name: string;
   description: string;
-  geography?: {
-    regions: string;
-    climate: string;
-  };
-  chronology?: {
-    eras: string;
-    currentEra: string;
-  };
-  lore?: {
-    culture: string;
-    mythology: string;
-  };
-  cartography?: {
-    mapUrl?: string;
-    locations: { id: string; name: string; type: string; x: number; y: number }[];
-  };
+  imageUrl?: string;
+  
+  // Nexo (ADN del Mundo)
+  magicActive?: boolean;
+  techActive?: boolean;
+  biologicalMortality?: boolean;
+  startYear?: number;
+
+  // Núcleo y Leyes
+  magicLevel?: number; // 0-100
+  techLevel?: number; // 0-100
+  gravity?: number; // 0.1-5.0
+  forbiddenLaws?: string; // Markdown
+
+  // Geografía y Ecología
+  climate?: string;
+  biomes?: string[];
+  naturalResources?: string[];
+  bestiaryIds?: string[]; // Vínculo a bestiario
+
+  // Sociedad y Economía
+  governmentType?: string;
+  currency?: string;
+  officialLanguages?: string[];
+  socialTaboos?: string[];
+
+  // Cronología
+  eras?: { id: string; name: string; startYear: number; endYear: number; description: string }[];
+  historicalEvents?: { id: string; eraId: string; year: number; name: string; description: string }[];
+
+  // Árbol Jerárquico
+  treeNodes?: TreeNode[];
+
+  // Facciones Dominantes
   dominantFactions?: string[]; // IDs de Facciones
 }
 

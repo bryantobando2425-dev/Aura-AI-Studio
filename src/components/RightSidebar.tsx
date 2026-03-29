@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { X, Save, FileText } from 'lucide-react';
 
 export function RightSidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {

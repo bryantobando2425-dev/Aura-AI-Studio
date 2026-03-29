@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { MapPin, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
 
 interface Node {
